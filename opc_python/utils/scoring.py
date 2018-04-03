@@ -21,8 +21,8 @@ def r(kind,predicted,observed,n_subjects=49,mask=True):
     
     r = 0.0
     for subject in range(1,n_subjects+1):
-        p = predicted[subject].unstack('Descriptor')
-        o = observed[subject].unstack('Descriptor')
+        p = predicted[subject]
+        o = observed[subject]
         r += r2(kind,None,p,o,mask=mask)
     r /= n_subjects
     return r
@@ -42,12 +42,6 @@ def score_summary(predicted,observed,mask=True):
     return 'Score: %3f; rs = %.3f,%.3f,%.3f' % \
                 (score_, r_int, r_ple, r_dec)
 
-def rs2score(r_int,r_ple,r_dec):
-    z_int = r_int/SIGMAS['int']
-    z_ple = r_ple/SIGMAS['ple']
-    z_dec = r_dec/SIGMAS['dec']
-    return (z_int+z_ple+z_dec)/3.0
-
 def z(kind,predicted,observed,n_subjects=49): 
     std = SIGMAS[kind]
     shuffled_r = 0#r2(kind,predicted,shuffled)
@@ -59,7 +53,7 @@ def z(kind,predicted,observed,n_subjects=49):
 def r2(kind,moment,predicted,observed,mask=False):
     # Predicted and observed should each be an array of 
     # molecules by 2*perceptual descriptors (means then stds)
-    descriptors = loading.get_descriptors(format=True)
+    descriptors = utils.get_targets(format=True)
     if moment == 'mean':
         try:
             p = predicted['mean']
@@ -87,8 +81,8 @@ def r2(kind,moment,predicted,observed,mask=False):
         p = p['Pleasantness']
         o = o['Pleasantness']
     elif kind == 'dec':
-        p = p.drop(['Intensity','Pleasantness'],1)
-        o = o.drop(['Intensity','Pleasantness'],1)
+        p = p[2:]
+        o = o[2:]
     elif kind in descriptors:
         p = p[kind]
         o = o[kind]
@@ -132,6 +126,12 @@ def r2(kind,moment,predicted,observed,mask=False):
     else:
         r /= denom
     return r
+    
+def rs2score(r_int,r_ple,r_dec):
+    z_int = r_int/SIGMAS['int']
+    z_ple = r_ple/SIGMAS['ple']
+    z_dec = r_dec/SIGMAS['dec']
+    return (z_int+z_ple+z_dec)/3.0
 
 def score2(predicted,observed):
     """Final score for sub-challenge 2."""
